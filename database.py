@@ -381,8 +381,15 @@ def init_db() -> None:
     if not config.TURSO_DATABASE_URL:
         config.DB_PATH.parent.mkdir(parents=True, exist_ok=True)
     with connection() as conn:
-        conn.execute("PRAGMA journal_mode = WAL")
-        conn.executescript(SCHEMA)
+        # Only build the schema on a fresh database; on a remote Turso database
+        # every statement is a network round trip, so skip the DDL when the
+        # tables already exist (migrations still run to add new columns).
+        present = conn.execute(
+            "SELECT 1 FROM sqlite_master WHERE type = 'table' AND name = 'signals'"
+        ).fetchone()
+        if not present:
+            conn.execute("PRAGMA journal_mode = WAL")
+            conn.executescript(SCHEMA)
         _migrate(conn)
     _schema_ready = True
 
