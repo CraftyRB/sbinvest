@@ -1,0 +1,17 @@
+# Local machine only
+.venv/
+.DS_Store
+
+# Secrets - configure these in the Streamlit Cloud dashboard instead
+env.txt
+.streamlit/secrets.toml
+
+# Runtime state (Streamlit Cloud starts with a fresh filesystem)
+investments.db
+investments.db-shm
+investments.db-wal
+reports/output/
+
+# Python
+__pycache__/
+*.pyc

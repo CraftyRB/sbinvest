@@ -1,0 +1,10 @@
+streamlit>=1.36
+openai>=1.40
+requests>=2.31
+pandas>=2.1
+python-dotenv>=1.0
+feedparser>=6.0
+youtube-transcript-api>=0.6
+apscheduler>=3.10
+fpdf2>=2.7
+libsql-experimental>=0.0.55; python_version < "3.15"
