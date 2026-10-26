@@ -70,35 +70,51 @@ class TursoConnection:
 
         self._raw = libsql.connect(url, auth_token=token)
 
+    def _execute_raw(self, sql: str, params: Iterable[Any] = ()) -> Any:
+        """libSQL builds expose either Connection.execute or only a cursor."""
+        run = getattr(self._raw, "execute", None)
+        if run is None:
+            run = self._raw.cursor().execute
+        params = tuple(params)
+        return run(sql, params) if params else run(sql)
+
     def execute(self, sql: str, params: Iterable[Any] = ()) -> _Cursor:
         upper = sql.lstrip().upper()
         if upper.startswith(self._SKIP):
             return _Cursor()
-        params = tuple(params)
-        cur = self._raw.execute(sql, params) if params else self._raw.execute(sql)
+        cur = self._execute_raw(sql, params)
         rowid = getattr(cur, "lastrowid", None)
         # Some libSQL builds only expose the id via a follow-up query.
         if rowid is None and upper.startswith("INSERT"):
-            fallback = self._raw.execute("SELECT last_insert_rowid() AS id")
-            found = fallback.fetchone()
-            rowid = found[0] if found else None
+            found = self._execute_raw("SELECT last_insert_rowid() AS id").fetchone()
+            if isinstance(found, dict):
+                rowid = next(iter(found.values()), None)
+            elif found is not None:
+                rowid = found[0]
         return _Cursor(cur, lastrowid=rowid)
 
     def executemany(self, sql: str, rows: Iterable[Iterable[Any]]) -> _Cursor:
-        return _Cursor(self._raw.executemany(sql, list(rows)))
+        run = getattr(self._raw, "executemany", None)
+        if run is None:
+            run = self._raw.cursor().executemany
+        return _Cursor(run(sql, list(rows)))
 
     def executescript(self, script: str) -> _Cursor:
         for statement in script.split(";"):
             statement = statement.strip()
             if statement:
-                self._raw.execute(statement)
+                self._execute_raw(statement)
         return _Cursor()
 
     def commit(self) -> None:
-        self._raw.commit()
+        run = getattr(self._raw, "commit", None)
+        if run is not None:
+            run()
 
     def rollback(self) -> None:
-        self._raw.rollback()
+        run = getattr(self._raw, "rollback", None)
+        if run is not None:
+            run()
 
     def close(self) -> None:
         """Connections are cached per thread, so closing is a no-op."""
