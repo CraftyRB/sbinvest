@@ -4,7 +4,9 @@ requests>=2.31
 pandas>=2.1
 python-dotenv>=1.0
 feedparser>=6.0
-youtube-transcript-api>=0.6
+youtube-transcript-api<1
 apscheduler>=3.10
 fpdf2>=2.7
-libsql-experimental>=0.0.55; python_version < "3.15"
+# libSQL publishes wheels up to cp313 only; a 3.14+ interpreter would try to
+# compile the Rust extension and fail, so keep the marker below 3.14.
+libsql-experimental>=0.0.55; python_version < "3.14"

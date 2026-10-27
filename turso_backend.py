@@ -66,7 +66,13 @@ class TursoConnection:
     _SKIP = ("PRAGMA JOURNAL_MODE", "PRAGMA FOREIGN_KEYS", "PRAGMA SYNCHRONOUS")
 
     def __init__(self, url: str, token: str) -> None:
-        import libsql_experimental as libsql
+        try:
+            import libsql_experimental as libsql
+        except ImportError as exc:
+            raise RuntimeError(
+                "libSQL ships wheels for Python 3.13 and older only. Set this app's "
+                "Python version to 3.13 (Streamlit Cloud: Manage app -> Settings)."
+            ) from exc
 
         self._raw = libsql.connect(url, auth_token=token)
 
