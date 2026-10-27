@@ -191,10 +191,15 @@ def render(sidebar_purse: float) -> None:
                 st.rerun()
         return
 
-    names = {p["name"]: p for p in portfolios}
+    by_id = {int(p["id"]): p for p in portfolios}
     c1, c2 = st.columns([2, 1])
-    selected_name = c1.selectbox("Portfolio", list(names.keys()))
-    portfolio = names[selected_name]
+    selected_id = c1.selectbox(
+        "Portfolio",
+        list(by_id.keys()),
+        format_func=lambda i: f"{by_id[i]['name']} · {by_id[i]['purse'] / 1_000_000:,.1f}M purse",
+        key="active_portfolio_id",
+    )
+    portfolio = by_id[selected_id]
 
     new_purse = c2.number_input(
         "Purse (coins)",
